@@ -33,7 +33,7 @@ var symbolMap = map[rune]TokenType{
 
 type Token struct {
 	Type  TokenType
-	pos   int
+	Pos   int
 	Value string
 }
 
@@ -63,7 +63,6 @@ func (l *Lexer) Lex() error {
 		case '"':
 			stringStart := l.pos
 			var buf bytes.Buffer
-			buf.WriteRune('"')
 			l.pos++
 			for l.pos < len(l.input) && (l.input[l.pos] != '"' || l.input[l.pos-1] == '\\') {
 				buf.WriteRune(l.input[l.pos])
@@ -72,7 +71,6 @@ func (l *Lexer) Lex() error {
 			if l.pos >= len(l.input) {
 				return errors.New("unterminated string at position: " + strconv.Itoa(stringStart))
 			}
-			buf.WriteRune(l.input[l.pos])
 			l.pos++
 			l.tokens = append(l.tokens, Token{STRING, stringStart, buf.String()})
 			continue
@@ -91,12 +89,24 @@ func (l *Lexer) Lex() error {
 
 		case 't', 'f':
 			boolStart := l.pos
-			nextFour := string(l.input[l.pos : l.pos+4])
-			if nextFour != "true" && nextFour != "false" {
-				return errors.New("unknown character: " + string(l.input[l.pos]) + " at position: " + strconv.Itoa(l.pos))
+			if len(l.input) < l.pos+4 {
+				return errors.New("unterminated boolean at position: " + strconv.Itoa(boolStart))
 			}
-			l.tokens = append(l.tokens, Token{BOOLEAN, boolStart, nextFour})
-			l.pos += 4
+			nextFour := string(l.input[l.pos : l.pos+4])
+			if nextFour == "true" {
+				l.tokens = append(l.tokens, Token{BOOLEAN, boolStart, nextFour})
+				l.pos += 4
+				continue
+			}
+			if len(l.input) < l.pos+5 {
+				return errors.New("unterminated boolean at position: " + strconv.Itoa(boolStart))
+			}
+			nextFive := string(l.input[l.pos : l.pos+5])
+			if nextFive == "false" {
+				l.tokens = append(l.tokens, Token{BOOLEAN, boolStart, nextFive})
+				l.pos += 5
+				continue
+			}
 		case 'n':
 			nullStart := l.pos
 			nextFour := string(l.input[l.pos : l.pos+4])
