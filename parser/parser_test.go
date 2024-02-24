@@ -7,7 +7,7 @@ import (
 	"github.com/mayankmadan/jsonparser/lexer"
 )
 
-func TestParser_generateAST(t *testing.T) {
+func TestParser_Parse(t *testing.T) {
 	type args struct {
 		data string
 	}
