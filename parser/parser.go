@@ -7,17 +7,10 @@ import (
 	"github.com/mayankmadan/jsonparser/lexer"
 )
 
-type AST struct {
-	Type     NodeType
-	Key      string
-	Value    any
-	Children []*AST
-}
-
 type Parser struct {
 	tokens []lexer.Token
 	pos    int
-	root   *AST
+	root   JsonNode
 }
 
 func NewParser(tokens []lexer.Token) *Parser {
@@ -85,22 +78,24 @@ func (p *Parser) getValue() (*AST, error) {
 		return nil, err
 	}
 	nodeType := p.getNodeType(*currentToken)
-	node := AST{Type: nodeType}
+	node := AST{nodeType: nodeType}
 
 	switch nodeType {
 	case NodeTypeObject:
-		node.Children, err = p.parseObject()
+		node.children, err = p.parseObject()
 		if err != nil {
 			return nil, err
 		}
 	case NodeTypeArray:
-		node.Children, err = p.parseArray()
+		node.children, err = p.parseArray()
 		if err != nil {
 			return nil, err
 		}
 
-	case NodeTypeString, NodeTypeNumber, NodeTypeBoolean, NodeTypeNull:
-		node.Value = currentToken.Value
+	case NodeTypeString, NodeTypeNumber, NodeTypeBoolean:
+		node.value = currentToken.Value
+	case NodeTypeNull:
+		node.value = nil
 	default:
 		return nil, fmt.Errorf("unexpected token %s at position: %d", currentToken.Value, currentToken.Pos)
 	}
@@ -108,8 +103,8 @@ func (p *Parser) getValue() (*AST, error) {
 	return &node, nil
 }
 
-func (p *Parser) parseArray() ([]*AST, error) {
-	children := []*AST{}
+func (p *Parser) parseArray() ([]JsonNode, error) {
+	children := []JsonNode{}
 	p.pos++
 	trailingComma := true
 
@@ -144,8 +139,8 @@ func (p *Parser) parseArray() ([]*AST, error) {
 	return children, nil
 }
 
-func (p *Parser) parseObject() ([]*AST, error) {
-	children := []*AST{}
+func (p *Parser) parseObject() ([]JsonNode, error) {
+	children := []JsonNode{}
 	if p.pos >= len(p.tokens) {
 		return nil, errors.New("unexpected end of input")
 	}
@@ -175,7 +170,7 @@ func (p *Parser) parseObject() ([]*AST, error) {
 		if err != nil {
 			return nil, err
 		}
-		node.Key = key
+		node.key = key
 		children = append(children, node)
 
 		currentToken, err = p.peekToken()
@@ -192,7 +187,7 @@ func (p *Parser) parseObject() ([]*AST, error) {
 	return children, nil
 }
 
-func (p *Parser) Parse() (*AST, error) {
+func (p *Parser) generateAST() (*AST, error) {
 	var err error
 	if len(p.tokens) == 0 {
 		return nil, errors.New("input empty")
@@ -210,17 +205,17 @@ func (p *Parser) Parse() (*AST, error) {
 
 	switch rootNodeType {
 	case NodeTypeArray:
-		rootNode = &AST{Type: NodeTypeArray}
-		rootNode.Children, err = p.parseArray()
+		rootNode = &AST{nodeType: NodeTypeArray}
+		rootNode.children, err = p.parseArray()
 		if err != nil {
 			return nil, err
 		}
 		p.root = rootNode
 		return rootNode, nil
 	case NodeTypeObject:
-		rootNode = &AST{Type: NodeTypeObject}
+		rootNode = &AST{nodeType: NodeTypeObject}
 
-		rootNode.Children, err = p.parseObject()
+		rootNode.children, err = p.parseObject()
 		if err != nil {
 			return nil, err
 		}
@@ -228,4 +223,12 @@ func (p *Parser) Parse() (*AST, error) {
 		return rootNode, nil
 	}
 	return nil, errors.New("root node needs to be either array or object")
+}
+
+func (p *Parser) Parse() (JsonNode, error) {
+	rootNode, err := p.generateAST()
+	if err != nil {
+		return nil, err
+	}
+	return rootNode, nil
 }

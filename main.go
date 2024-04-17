@@ -15,7 +15,7 @@ func printTokens(tokens []lexer.Token) {
 	}
 }
 
-func printTree(nodes []*parser.AST, level int) {
+func printTree(nodes []parser.JsonNode, level int) {
 	if len(nodes) == 0 {
 		return
 	}
@@ -23,8 +23,11 @@ func printTree(nodes []*parser.AST, level int) {
 		for i := 0; i < level; i++ {
 			fmt.Printf("\t")
 		}
-		fmt.Printf("type: %d, key: %s, value: %s\n", node.Type, node.Key, node.Value)
-		printTree(node.Children, level+1)
+		fmt.Printf("type: %d, key: %s, value: %s\n", node.Type(), node.Key(), node.Value())
+		// if node.Type() == parser.NodeTypeArray {
+		// 	fmt.Printf("Array: %v\n", node)
+		// }
+		printTree(node.Children(), level+1)
 	}
 }
 
@@ -42,12 +45,24 @@ func main() {
 		return
 	}
 	p := parser.NewParser(lexer.Tokens())
-	tree, err := p.Parse()
+	node, err := p.Parse()
 
 	if err != nil {
 		log.Println(err.Error())
 		return
 	}
+	node.Put("hello", parser.NewNode("World!"))
 
-	printTree([]*parser.AST{tree}, 0)
+	printTree([]parser.JsonNode{node}, 0)
+	newNode := parser.NewNode("This is a put test")
+	newNode2 := parser.NewNode(123)
+	newNode3 := parser.NewNode(true)
+	newNode4 := parser.NewNode(nil)
+	newNode5 := parser.NewNode([]any{1, 2, 3, 100})
+	node.Get("test5").Get("a").Put("putTest", newNode)
+	node.Get("test5").Get("a").Put("putTest2", newNode2)
+	node.Get("test5").Get("a").Put("putTest3", newNode3)
+	node.Get("test5").Get("a").Put("putTest4", newNode4)
+	node.Put("arrayNode", newNode5)
+	printTree([]parser.JsonNode{node}, 0)
 }

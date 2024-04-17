@@ -1,8 +1,8 @@
 {
     "test": "test",
     "test2": "test\"2s",
-    "test3": 123,
-    "test4": true,
+    "test3": "123",
+    "test4": false,
     "test5": null,
     "test6": [1,2,3]
 }

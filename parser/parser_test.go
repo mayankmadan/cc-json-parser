@@ -7,7 +7,7 @@ import (
 	"github.com/mayankmadan/jsonparser/lexer"
 )
 
-func TestParser_Parse(t *testing.T) {
+func TestParser_generateAST(t *testing.T) {
 	type args struct {
 		data string
 	}
@@ -30,7 +30,7 @@ func TestParser_Parse(t *testing.T) {
 			args: args{
 				data: `{"key": "value"}`,
 			},
-			want:    &AST{Type: NodeTypeObject, Key: "", Value: nil, Children: []*AST{{Type: NodeTypeString, Key: "key", Value: "value"}}},
+			want:    &AST{nodeType: NodeTypeObject, key: "", value: nil, children: []JsonNode{&AST{nodeType: NodeTypeString, key: "key", value: "value"}}},
 			wantErr: false,
 		},
 		{
@@ -46,7 +46,7 @@ func TestParser_Parse(t *testing.T) {
 			args: args{
 				data: `{"key1": "value", "key2": {"key3": "value3"}, "test4": "value4"}`,
 			},
-			want:    &AST{Type: NodeTypeObject, Key: "", Value: nil, Children: []*AST{{Type: NodeTypeString, Key: "key1", Value: "value", Children: nil}, {Type: NodeTypeObject, Key: "key2", Value: nil, Children: []*AST{{Type: NodeTypeString, Key: "key3", Value: "value3"}}}, {Type: NodeTypeString, Key: "test4", Value: "value4"}}},
+			want:    &AST{nodeType: NodeTypeObject, key: "", value: nil, children: []JsonNode{&AST{nodeType: NodeTypeString, key: "key1", value: "value", children: nil}, &AST{nodeType: NodeTypeObject, key: "key2", value: nil, children: []JsonNode{&AST{nodeType: NodeTypeString, key: "key3", value: "value3"}}}, &AST{nodeType: NodeTypeString, key: "test4", value: "value4"}}},
 			wantErr: false,
 		},
 		{
@@ -62,7 +62,7 @@ func TestParser_Parse(t *testing.T) {
 			args: args{
 				data: `{"key1": "value", "key2": {"key3": ["value3", "value4"]}, "test4": "value4"}`,
 			},
-			want:    &AST{Type: NodeTypeObject, Key: "", Value: nil, Children: []*AST{{Type: NodeTypeString, Key: "key1", Value: "value", Children: nil}, {Type: NodeTypeObject, Key: "key2", Value: nil, Children: []*AST{{Type: NodeTypeArray, Key: "key3", Value: nil, Children: []*AST{{Type: NodeTypeString, Key: "", Value: "value3"}, {Type: NodeTypeString, Key: "", Value: "value4"}}}}}, {Type: NodeTypeString, Key: "test4", Value: "value4"}}},
+			want:    &AST{nodeType: NodeTypeObject, key: "", value: nil, children: []JsonNode{&AST{nodeType: NodeTypeString, key: "key1", value: "value", children: nil}, &AST{nodeType: NodeTypeObject, key: "key2", value: nil, children: []JsonNode{&AST{nodeType: NodeTypeArray, key: "key3", value: nil, children: []JsonNode{&AST{nodeType: NodeTypeString, key: "", value: "value3"}, &AST{nodeType: NodeTypeString, key: "", value: "value4"}}}}}, &AST{nodeType: NodeTypeString, key: "test4", value: "value4"}}},
 			wantErr: false,
 		},
 	}
@@ -75,7 +75,7 @@ func TestParser_Parse(t *testing.T) {
 				return
 			}
 			p := NewParser(l.Tokens())
-			got, err := p.Parse()
+			got, err := p.generateAST()
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Parser.Parse() error = %v, wantErr %v", err, tt.wantErr)
 				return
