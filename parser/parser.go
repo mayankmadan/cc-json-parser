@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mayankmadan/jsonparser/lexer"
+	"github.com/mayankmadan/cc-json-parser/lexer"
 )
 
 type Parser struct {

@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/mayankmadan/jsonparser/lexer"
-	"github.com/mayankmadan/jsonparser/parser"
+	"github.com/mayankmadan/cc-json-parser/lexer"
+	"github.com/mayankmadan/cc-json-parser/parser"
 )
 
 func printTokens(tokens []lexer.Token) {

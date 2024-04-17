@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mayankmadan/jsonparser/lexer"
+	"github.com/mayankmadan/cc-json-parser/lexer"
 )
 
 func TestParser_generateAST(t *testing.T) {
